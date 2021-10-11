@@ -1,0 +1,154 @@
+{
+	"info": {
+		"_postman_id": "3f59f1b2-b408-43ad-8972-d8ce733d72cb",
+		"name": "Interview",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "mercedes-benz-techgig",
+			"item": [
+				{
+					"name": "dev",
+					"item": [
+						{
+							"name": "health-check",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/api/health",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"health"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "check-fuel",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \"vin\": \"W1K2062161F0046\", \"source\": \"Home\", \"destination\": \"Movie Theatre\" }"
+								},
+								"url": {
+									"raw": "http://localhost:8080/api/v1/check-fuel",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"check-fuel"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "find-travel-distance",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"source\": \"home\", \"destination\": \"Movie Theatre\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://restmock.techgig.com/merc/distance",
+							"protocol": "https",
+							"host": [
+								"restmock",
+								"techgig",
+								"com"
+							],
+							"path": [
+								"merc",
+								"distance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "current-charge-level",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"vin\": \"W1K2062161F0014\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://restmock.techgig.com/merc/charge_level",
+							"protocol": "https",
+							"host": [
+								"restmock",
+								"techgig",
+								"com"
+							],
+							"path": [
+								"merc",
+								"charge_level"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "find-charging-stations",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"source\": \"home\", \"destination\": \"Movie Theatre\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://restmock.techgig.com/merc/charging_stations",
+							"protocol": "https",
+							"host": [
+								"restmock",
+								"techgig",
+								"com"
+							],
+							"path": [
+								"merc",
+								"charging_stations"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

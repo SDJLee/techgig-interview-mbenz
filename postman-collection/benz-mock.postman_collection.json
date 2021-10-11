@@ -1,0 +1,181 @@
+{
+	"info": {
+		"_postman_id": "31f0840f-6f0f-4496-a357-cf84ef92ffbd",
+		"name": "benz-mock",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "charging_stations",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"source\": \"home\", \"destination\": \"Movie Theatre\" }"
+				},
+				"url": {
+					"raw": "{{url}}/charging_stations",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"charging_stations"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Default",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url}}//charging_stations",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"",
+								"charging_stations"
+							]
+						}
+					},
+					"code": 200,
+					"_postman_previewlanguage": null,
+					"header": null,
+					"cookie": [],
+					"body": "\n{\n    \"source\": \"home\",\n    \"destination\": \"Movie Theatre\",\n    \"chargingStations\": [\n        {\n            \"name\": \"S1\",\n            \"distance\": 10,\n            \"limit\": 100\n        },\n        {\n            \"name\": \"S2\",\n            \"distance\": 30,\n            \"limit\": 30\n        },\n        {\n            \"name\": \"S3\",\n            \"distance\": 60,\n            \"limit\": 30\n        },\n        {\n            \"name\": \"S4\",\n            \"distance\": 120,\n            \"limit\": 40\n        }\n    ],\n    \"error\": null\n}"
+				}
+			]
+		},
+		{
+			"name": "distance",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{url}}/distance",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"distance"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Default",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url}}/distance",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"distance"
+							]
+						}
+					},
+					"code": 200,
+					"_postman_previewlanguage": null,
+					"header": null,
+					"cookie": [],
+					"body": "{\n    \"source\": \"home\",\n    \"destination\": \"Movie Theatre\",\n    \"error\": null,\n    \"distance\": 130\n}"
+				}
+			]
+		},
+		{
+			"name": "charge_level",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/charge_level",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"charge_level"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Default",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"vin\": \"W1K2062161F0046\"}"
+						},
+						"url": {
+							"raw": "{{url}}/charge_level",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"charge_level"
+							]
+						}
+					},
+					"_postman_previewlanguage": null,
+					"header": null,
+					"cookie": [],
+					"body": "{\r\n    \"vin\": \"W1K2062161F0046\",\r\n    \"currentChargeLevel\": 10,\r\n    \"error\": null\r\n}"
+				}
+			]
+		},
+		{
+			"name": "distance",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": null
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io"
+		}
+	]
+}

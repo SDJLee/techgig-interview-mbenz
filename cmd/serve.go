@@ -1,4 +1,4 @@
-package serve
+package cmd
 
 import (
 	"fmt"
@@ -8,19 +8,31 @@ import (
 	"github.com/SDJLee/mercedes-benz/handler"
 	"github.com/SDJLee/mercedes-benz/metrics"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
-func Serve(port string) {
+func serve() {
+	port := viper.GetInt("PORT")
+	writeTimeout := viper.GetInt("SERVER_WRITE_TIMEOUT")
+	readTimeout := viper.GetInt("SERVER_READ_TIMEOUT")
+
+	if writeTimeout == 0 {
+		writeTimeout = 15
+	}
+	if readTimeout == 0 {
+		readTimeout = 15
+	}
+	fmt.Printf("attempting to serve in port '%d' \n", port)
 	router := setupRouter()
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         "localhost:" + port,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		Addr:         fmt.Sprintf("localhost:%d", port),
+		WriteTimeout: time.Duration(writeTimeout) * time.Second,
+		ReadTimeout:  time.Duration(readTimeout) * time.Second,
 	}
 	fmt.Println("Server started and listening on the port: ", port)
 	if err := srv.ListenAndServe(); err != nil {
-		fmt.Println("failed to start devero-services-evv", err)
+		fmt.Println("failed to start benz", err)
 		panic(err)
 	}
 }
