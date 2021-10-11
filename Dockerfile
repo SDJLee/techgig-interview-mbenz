@@ -23,8 +23,10 @@ LABEL app="benz"
 LABEL version="0.0.1"
 
 COPY --from=builder /app/benz /app/
+COPY --from=builder /app/app-dev.env /app/
+COPY --from=builder /app/app-prod.env /app/
 
 ENV APP_ENV=dev
 
 EXPOSE 8080
-CMD /app/benz serve --log -
+CMD /app/benz serve

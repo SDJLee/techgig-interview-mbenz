@@ -52,7 +52,7 @@ func loadConfig() {
 	if env == "" {
 		env = EnvDev
 	}
-	viper.AddConfigPath("./")
+	viper.AddConfigPath("/app")
 	viper.SetConfigName(fmt.Sprintf("app-%s", env))
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
