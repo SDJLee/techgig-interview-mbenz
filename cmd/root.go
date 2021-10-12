@@ -4,25 +4,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/SDJLee/mercedes-benz/logger"
+	"github.com/SDJLee/mercedes-benz/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-const (
-	EnvDev    = "dev"
-	EnvProd   = "prod"
-	appEnvStr = "APP_ENV"
-)
-
 var rootCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "",
+	Short: "serves the merc-benz-route-checker service",
 	Run: func(cmd *cobra.Command, args []string) {
-		// appEnv, _ := cmd.Flags().GetString(appEnvStr)
-		// setupAppEnv(appEnv)
-
-		logger.SetupLogger()
 		serve()
 	},
 }
@@ -33,32 +23,32 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+
 func init() {
-	// rootCmd.PersistentFlags().StringP(appEnvStr, "e", "", "Development or production environment")
 	loadConfig()
 }
 
-// func setupAppEnv(appEnv string) {
-// 	if appEnv == "" || appEnv == EnvDev {
-// 		os.Setenv(appEnvStr, EnvDev)
-// 		return
-// 	}
-// 	os.Setenv(appEnv, EnvProd)
-// }
-
 func loadConfig() {
-	fmt.Println("env str", os.Getenv(appEnvStr))
-	env := os.Getenv(appEnvStr)
+	os.Setenv(util.AppEnvStr, util.EnvDev)
+	os.Setenv(util.BasePath, "/mnt/d/Developer/go/src/github.com/SDJLee/mercedes-benz")
+	fmt.Println("env str", os.Getenv(util.AppEnvStr))
+	env := os.Getenv(util.AppEnvStr)
 	if env == "" {
-		env = EnvDev
+		env = util.EnvDev
 	}
-	viper.AddConfigPath("/app")
-	viper.SetConfigName(fmt.Sprintf("app-%s", env))
-	viper.SetConfigType("env")
+
+	fmt.Println("base path str", os.Getenv(util.BasePath))
+	basePath := os.Getenv(util.BasePath)
+	if basePath == "" {
+		basePath = util.DefaultBasePath
+	}
+
+	viper.AddConfigPath(basePath)
+	viper.SetConfigName(fmt.Sprintf(util.ConfigFileFormat, env))
+	viper.SetConfigType(util.ConfigFileType)
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
 	if err != nil {
 		return
 	}
-
 }

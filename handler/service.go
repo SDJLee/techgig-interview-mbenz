@@ -2,9 +2,9 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 
+	"github.com/SDJLee/mercedes-benz/metrics"
 	"github.com/SDJLee/mercedes-benz/model"
 	"github.com/SDJLee/mercedes-benz/util"
 	"gopkg.in/guregu/null.v3"
@@ -27,35 +27,37 @@ import (
 // the logic computes the minimum number of charging stations to visit.
 // It returns the response that contains the cummulative information from above API calls and computed stations to visit list. In case of error or if
 // the destination/station cannot be reached with current charge, it returns appropriate error code and message.
-func computeArrival(reqBody *model.Request, transId int64) *model.Response {
-	// TODO: handle panic
-
-	// TODO: step 3: check if charge is required. if no, return response. else continue to step 4
-	// TODO: step 4: find stations
-	// TODO: step 5: find route
+func computeArrival(reqBody *model.Request, transId int64) (response *model.Response) {
+	// recover a panic and return technical exception
+	defer func() {
+		if ex := recover(); ex != nil {
+			logger.Error("panic recovered", ex)
+			response = generateExceptionResp("", "", "", 0, 0, transId, true)
+		}
+	}()
 
 	// step 1: find charge level and handle error
 	chargeLevel, err := getChargeLevel(reqBody)
 	if err != nil || chargeLevel.Error.Valid {
-		fmt.Println("error on fetching charge level", err)
+		logger.Error("error on fetching charge level", err)
 		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, 0, 0, transId, true)
 	}
-	fmt.Println("chargeLevel", chargeLevel)
+	logger.Debug("chargeLevel", chargeLevel)
 
 	// step 2: find distance and handle error
 	travelDistance, err := getTravelDistance(reqBody)
 	if err != nil || travelDistance.Error.Valid {
-		fmt.Println("error on fetching travel distance", err)
+		logger.Error("error on fetching travel distance", err)
 		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, 0, chargeLevel.CurrentChargeLevel, transId, true)
 	}
-	fmt.Println("travelDistance", travelDistance)
+	logger.Debug("travelDistance", travelDistance)
 
-	// step 3:
+	// step 3: handle if current level is sufficient to reach the destination
 	if chargeLevel.CurrentChargeLevel >= travelDistance.Distance {
 		// with current charge level greater/equal to the total distance, there is no need to charge
 		// when current charge level is equal to total distance, the charge level on arriving
 		// the destination will be 0 which is acceptable.
-		response := *&model.Response{
+		response = &model.Response{
 			TransactionID:      transId,
 			Vin:                null.StringFrom(reqBody.Vin),
 			Source:             null.StringFrom(reqBody.Source),
@@ -66,8 +68,8 @@ func computeArrival(reqBody *model.Request, transId int64) *model.Response {
 			ChargingStations:   nil,
 			Errors:             nil,
 		}
-		fmt.Println("final response", response)
-		return &response
+		logger.Debug("final response", response)
+		return response
 	}
 
 	// at this point, we know that with current charge level, we cannot reach the distance. continue further to retrieve list of available charging
@@ -76,22 +78,22 @@ func computeArrival(reqBody *model.Request, transId int64) *model.Response {
 	// step 4: find stations
 	chargeStations, err := getChargingStations(reqBody)
 	if err != nil || chargeStations.Error.Valid {
-		fmt.Println("error on fetching charging stations", err)
+		logger.Error("error on fetching charging stations", err)
 		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, travelDistance.Distance, chargeLevel.CurrentChargeLevel, transId, true)
 	}
-	fmt.Println("chargeStations", chargeStations)
+	logger.Debug("chargeStations", chargeStations)
 
 	// step 5: compute the minimum number of stations to visit.
 	stationsVisited, err := computeRoute(chargeStations.ChargingStations, chargeLevel.CurrentChargeLevel, travelDistance.Distance)
 	if err != nil {
-		fmt.Println("error on fetching charging stations", err)
+		logger.Error("error on fetching charging stations", err)
 		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, travelDistance.Distance, chargeLevel.CurrentChargeLevel, transId, false)
 	}
 
 	// sort the stations slice order the station names lexicographically
 	sort.Strings(stationsVisited)
 
-	response := *&model.Response{
+	response = &model.Response{
 		TransactionID:      transId,
 		Vin:                null.StringFrom(reqBody.Vin),
 		Source:             null.StringFrom(reqBody.Source),
@@ -102,12 +104,13 @@ func computeArrival(reqBody *model.Request, transId int64) *model.Response {
 		ChargingStations:   stationsVisited,
 		Errors:             nil,
 	}
-	fmt.Println("final response", response)
-	return &response
+	logger.Debug("final response", response)
+	return response
 }
 
 // getChargeLevel method handles the API call to retrieve current charge level
 func getChargeLevel(reqBody *model.Request) (*model.ResChargeLevel, error) {
+	defer metrics.MonitorTimeElapsed("constructing charge level")()
 	chargeLevelReq := *&model.ReqChargeLevel{
 		Vin: reqBody.Vin,
 	}
@@ -120,6 +123,7 @@ func getChargeLevel(reqBody *model.Request) (*model.ResChargeLevel, error) {
 
 // getTravelDistance method handles the API call to retrieve the travel distance
 func getTravelDistance(reqBody *model.Request) (*model.ResTravelDistance, error) {
+	defer metrics.MonitorTimeElapsed("constructing travel distance")()
 	travelDistanceReq := *&model.ReqTravelDistance{
 		Source:      reqBody.Source,
 		Destination: reqBody.Destination,
@@ -133,6 +137,7 @@ func getTravelDistance(reqBody *model.Request) (*model.ResTravelDistance, error)
 
 // getChargingStations method handles the API call to retrieve slice of charging stations between source and destination
 func getChargingStations(reqBody *model.Request) (*model.ResChargeStations, error) {
+	defer metrics.MonitorTimeElapsed("constructing charge stations")()
 	chargingStationsReq := *&model.ReqChargeStations{
 		Source:      reqBody.Source,
 		Destination: reqBody.Destination,
@@ -210,12 +215,13 @@ func generateExceptionResp(vin string, source string, dest string, distance int6
 // The time complexity of this logic is O(nlog(n)). We iterate n times and greedily check if recharge is required.
 // The space complexity of this logic is O(n)
 func computeRoute(chargingStations []*model.Station, availableCharge int64, distanceToDest int64) ([]string, error) {
+	logger.Info("computing route")
+	defer logger.Info("route computed")
 	var distanceTravelled int64 = 0
-	fmt.Println("\n\n---------")
-	fmt.Printf("computeR with availableCharge %v distanceToDest %v distanceTravelled %v\n", availableCharge, distanceToDest, distanceTravelled)
+	logger.Debug("\n\n---------")
+	logger.Debugf("computeR with availableCharge %v distanceToDest %v distanceTravelled %v\n", availableCharge, distanceToDest, distanceTravelled)
 	stationsVisited := make([]string, 0)
 	pq := util.InitQueue()
-	fmt.Println("first pq print")
 
 	// if available charge is >= distance to destination, there is no need to stop at stations to recharge. Return empty slice.
 	if availableCharge >= distanceToDest {
@@ -224,21 +230,21 @@ func computeRoute(chargingStations []*model.Station, availableCharge int64, dist
 
 	// iterate through stations to apply greedy approach
 	for _, station := range chargingStations {
-		fmt.Println("\n\n-------------")
+		logger.Debug("\n\n-------------")
 
-		fmt.Printf("checking charge availableCharge < (station.Distance - distanceTravelled) :: %v < %v - %v = %v \n", availableCharge, station.Distance, distanceTravelled, (station.Distance - distanceTravelled))
+		logger.Debugf("checking charge availableCharge < (station.Distance - distanceTravelled) :: %v < %v - %v = %v \n", availableCharge, station.Distance, distanceTravelled, (station.Distance - distanceTravelled))
 		// This condition is to check if the charge left in car is sufficient to reach the next station.
 		// The calculation (station.Distance - distanceTravelled) is done because, the distance provided in station struct doesn't denote the distance between the stations. It denotes the distance between
 		// the source and the station. As the car travels from source to destination and passes through each station, we should subtract this travelled distance with the distance provided in station struct.
 		// In simpler terms, the distance provided in station struct includes the distance travelled by the car. We need the difference between the two to check if the car will be able to reach the next station
 		// from a previous station/source with current charge.
 		for availableCharge < (station.Distance - distanceTravelled) {
-			fmt.Println("-------------")
-			fmt.Println("\tcharge not sufficient, needs refill")
-			fmt.Println("\tpq len:: ", pq.Len())
+			logger.Debug("-------------")
+			logger.Debug("\tcharge not sufficient, needs refill")
+			logger.Debug("\tpq len:: ", pq.Len())
 			// If there are no more stations left with charge, then there is no sufficient charge for the car to reach the destination. return error.
 			if pq.IsEmpty() {
-				fmt.Println("\t\tout of charge")
+				logger.Warn("\t\tout of charge")
 				return nil, errors.New("out of charge")
 			}
 			// The priority queue pops the element with greater priority value. Here, the charge left in a station is the priority. This pop will return next station that has the maximum charge left for consumption.
@@ -257,13 +263,13 @@ func computeRoute(chargingStations []*model.Station, availableCharge int64, dist
 			if distanceTravelled < refillStationData.Distance {
 				distanceTravelled = refillStationData.Distance
 			}
-			fmt.Printf("\tcomputing charge left with params :: availableCharge - refillStationData.Distance = chargeLeft :: %v - %v = %v \n", availableCharge, refillStationData.Distance, chargeLeft)
-			fmt.Println("\tdistanceTravelled", distanceTravelled)
-			fmt.Printf("\trefilling at station %v \n\t\t availableCharge %v \n\t\t chargeLeft %v \n\t\t charge at station %v \n\t\t distanceTravelled %v \n\t\t distanceToDest %v\n",
+			logger.Debugf("\tcomputing charge left with params :: availableCharge - refillStationData.Distance = chargeLeft :: %v - %v = %v \n", availableCharge, refillStationData.Distance, chargeLeft)
+			logger.Debug("\tdistanceTravelled", distanceTravelled)
+			logger.Debugf("\trefilling at station %v \n\t\t availableCharge %v \n\t\t chargeLeft %v \n\t\t charge at station %v \n\t\t distanceTravelled %v \n\t\t distanceToDest %v\n",
 				refillingStation.Value, availableCharge, chargeLeft, refillingStation.Priority, refillStationData.Distance, distanceToDest)
 			// This shows the refilling process. The availableCharge value is updated to the sum between chargeLeft and the charge available at the station depicted by variable nextMaxCharge.
 			availableCharge = chargeLeft + nextMaxCharge
-			fmt.Printf("\trefilled at station %v availableCharge %v with charge %v distanceToDest %v\n", refillingStation.Value, availableCharge, refillingStation.Priority, distanceToDest)
+			logger.Debugf("\trefilled at station %v availableCharge %v with charge %v distanceToDest %v\n", refillingStation.Value, availableCharge, refillingStation.Priority, distanceToDest)
 		}
 		// regardless if car stops for recharge, push the station into priority queue on each iteration. This station will be consumed in above for loop when charge is required.
 		pq.PushItem(&util.QueueItem{
@@ -271,35 +277,33 @@ func computeRoute(chargingStations []*model.Station, availableCharge int64, dist
 			Priority: station.Limit,
 			Data:     station,
 		})
-		fmt.Printf("added station %v to queue \n", station.Name)
-		fmt.Println("visited stations: ", stationsVisited)
-		fmt.Println("-------------")
+		logger.Debugf("added station %v to queue \n", station.Name)
+		logger.Debug("visited stations: ", stationsVisited)
+		logger.Debug("-------------")
 	}
-	fmt.Println()
-	fmt.Println()
 
 	// handling edge case where the car hasn't reached the destination but still has stations left to recharge.
 	// The logic repeats the same step from above.
 	for availableCharge < distanceTravelled {
 		// TODO: Recheck this computation, move to closure
-		fmt.Printf("last resort :: checking charge availableCharge < distanceToDest :: %v < %v \n", availableCharge, distanceToDest)
+		logger.Debugf("last resort :: checking charge availableCharge < distanceToDest :: %v < %v \n", availableCharge, distanceToDest)
 		if pq.IsEmpty() {
 			// If there are no more stations left with charge, then there is no sufficient charge for the car to reach the destination. return error.
-			fmt.Println("last resort :: out of charge")
+			logger.Debug("last resort :: out of charge")
 			return nil, errors.New("out of charge")
 		}
-		fmt.Printf("Available stations: ")
+		logger.Debugf("Available stations: ")
 		refillingStation := pq.PopItem()
 		nextMaxCharge := refillingStation.Priority
 		refillStationData := refillingStation.Data.(*model.Station)
 		stationsVisited = append(stationsVisited, refillingStation.Value)
 		chargeLeft := availableCharge - (refillStationData.Distance - distanceTravelled)
 		distanceTravelled = refillStationData.Distance
-		fmt.Printf("refilling last resort at station %v availableCharge %v with charge %v distanceToDest %v\n", refillingStation.Value, availableCharge, refillingStation.Priority, distanceToDest)
+		logger.Debugf("refilling last resort at station %v availableCharge %v with charge %v distanceToDest %v\n", refillingStation.Value, availableCharge, refillingStation.Priority, distanceToDest)
 		availableCharge = chargeLeft + nextMaxCharge
-		fmt.Printf("refilled last resort at station %v availableCharge %v with charge %v distanceToDest %v\n", refillingStation.Value, availableCharge, refillingStation.Priority, distanceToDest)
+		logger.Debugf("refilled last resort at station %v availableCharge %v with charge %v distanceToDest %v\n", refillingStation.Value, availableCharge, refillingStation.Priority, distanceToDest)
 	}
-	fmt.Println("---------")
-	fmt.Println("stationsVisited", stationsVisited)
+	logger.Debug("---------")
+	logger.Debug("stationsVisited", stationsVisited)
 	return stationsVisited, nil
 }

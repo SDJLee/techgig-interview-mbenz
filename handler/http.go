@@ -7,7 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/SDJLee/mercedes-benz/metrics"
 	"github.com/SDJLee/mercedes-benz/model"
+	"github.com/SDJLee/mercedes-benz/util"
+	"github.com/spf13/viper"
 )
 
 var defaultHeaders = map[string]string{
@@ -16,8 +19,13 @@ var defaultHeaders = map[string]string{
 }
 
 func GetChargeLevel(requestBody *model.ReqChargeLevel) (*model.ResChargeLevel, error) {
-	url := "https://restmock.techgig.com/merc/charge_level"
+	defer metrics.MonitorTimeElapsed("retrieving charge level data")()
+	logger.Info("retrieving charge level data")
+	defer logger.Info("retrieved charge level data")
+	// url := "https://restmock.techgig.com/merc/charge_level"
 	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charge_level"
+	url := fmt.Sprintf("%s/charge_level", viper.GetString(util.API_ADDRESS))
+	logger.Debugf("API url to retrieve charge level: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
 	if err != nil {
@@ -40,8 +48,13 @@ func GetChargeLevel(requestBody *model.ReqChargeLevel) (*model.ResChargeLevel, e
 }
 
 func GetTravelDistance(requestBody *model.ReqTravelDistance) (*model.ResTravelDistance, error) {
-	url := "https://restmock.techgig.com/merc/distance"
+	defer metrics.MonitorTimeElapsed("retrieving travel distance data")()
+	logger.Info("retrieving travel distance data")
+	defer logger.Info("retrieved travel distance data")
+	// url := "https://restmock.techgig.com/merc/distance"
 	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/distance"
+	url := fmt.Sprintf("%s/distance", viper.GetString(util.API_ADDRESS))
+	logger.Debugf("API url to retrieve travel distance: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
 	if err != nil {
@@ -59,13 +72,18 @@ func GetTravelDistance(requestBody *model.ReqTravelDistance) (*model.ResTravelDi
 		return nil, err
 	}
 	// TODO: remove this
-	fmt.Println("response TravelDistance", response)
+	// fmt.Println("response TravelDistance", response)
 	return response, nil
 }
 
 func GetChargingStations(requestBody *model.ReqChargeStations) (*model.ResChargeStations, error) {
-	url := "https://restmock.techgig.com/merc/charging_stations"
+	defer metrics.MonitorTimeElapsed("retrieving charge stations data")()
+	logger.Info("retrieving charge stations data")
+	defer logger.Info("retrieved charge stations data")
+	// url := "https://restmock.techgig.com/merc/charging_stations"
 	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charging_stations"
+	url := fmt.Sprintf("%s/charging_stations", viper.GetString(util.API_ADDRESS))
+	logger.Debugf("API url to retrieve charge stations: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
 	if err != nil {

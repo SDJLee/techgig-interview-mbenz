@@ -1,11 +1,17 @@
 package metrics
 
 import (
-	"fmt"
 	"time"
 
+	log "github.com/SDJLee/mercedes-benz/logger"
 	"github.com/gin-gonic/gin"
 )
+
+// The idea of this package is to monitor and collect metrics for the service for instrumentation.
+// Current implementation is a scaffold and the instrumentation are logged. This should be enhanced to connect
+// with an instrumentation tool.
+
+var logger = log.SubLogger("merc-benz-route-checker-metrics")
 
 // MonitorTimeElapsed reports the time elapsed to execute a function.
 // To use this, add it in defer at beginning of a function like below code.
@@ -13,7 +19,7 @@ import (
 func MonitorTimeElapsed(what string) func() {
 	start := time.Now()
 	return func() {
-		fmt.Printf("%s took %v\n", what, time.Since(start))
+		logger.Infof("%s took %v\n", what, time.Since(start))
 	}
 }
 
@@ -23,7 +29,7 @@ func MeasureApiComputationTime() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		defer func() {
-			fmt.Printf("%s took %v\n", c.Request.URL.Path, time.Since(start))
+			logger.Infof("%s took %v\n", c.Request.URL.Path, time.Since(start))
 		}()
 		c.Next()
 	}
