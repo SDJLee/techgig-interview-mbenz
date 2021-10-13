@@ -15,7 +15,6 @@ import (
 // Future plan for this package is to push the logs into ELK stack.
 
 var slogger *zap.SugaredLogger
-var queue = make(chan []byte, 100)
 
 type lumberjackSink struct {
 	*lumberjack.Logger
@@ -26,9 +25,9 @@ func (lumberjackSink) Sync() error {
 }
 
 func init() {
-	logFile := viper.GetString(util.LOG_PATH)
+	logFile := viper.GetString(util.LogPath)
 	// logFile := "./test.log"
-	env := viper.GetString(util.AppEnvStr)
+	env := viper.GetString(util.AppEnv)
 	devMode := false
 	if env == "dev" || env == "" {
 		devMode = true

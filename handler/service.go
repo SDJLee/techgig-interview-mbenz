@@ -40,18 +40,28 @@ func computeArrival(reqBody *model.Request, transId int64) (response *model.Resp
 
 	// step 1: find charge level and handle error
 	chargeLevel, err := getChargeLevel(reqBody)
-	if err != nil || chargeLevel.Error.Valid {
+	if err != nil {
 		logger.Error("error on fetching charge level", err)
 		fmt.Println("error on fetching charge level", err)
+		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, 0, 0, transId, true)
+	}
+	if chargeLevel.Error.Valid {
+		logger.Error("error on fetching charge level", chargeLevel.Error.String)
+		fmt.Println("error on fetching charge level", chargeLevel.Error.String)
 		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, 0, 0, transId, true)
 	}
 	logger.Debug("chargeLevel", chargeLevel)
 
 	// step 2: find distance and handle error
 	travelDistance, err := getTravelDistance(reqBody)
-	if err != nil || travelDistance.Error.Valid {
+	if err != nil {
 		logger.Error("error on fetching travel distance", err)
 		fmt.Println("error on fetching travel distance", err)
+		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, 0, chargeLevel.CurrentChargeLevel, transId, true)
+	}
+	if travelDistance.Error.Valid {
+		logger.Error("error on fetching travel distance", travelDistance.Error.String)
+		fmt.Println("error on fetching travel distance", travelDistance.Error.String)
 		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, 0, chargeLevel.CurrentChargeLevel, transId, true)
 	}
 	logger.Debug("travelDistance", travelDistance)
@@ -81,9 +91,14 @@ func computeArrival(reqBody *model.Request, transId int64) (response *model.Resp
 
 	// step 4: find stations
 	chargeStations, err := getChargingStations(reqBody)
-	if err != nil || chargeStations.Error.Valid {
+	if err != nil {
 		logger.Error("error on fetching charging stations", err)
 		fmt.Println("error on fetching charging stations", err)
+		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, travelDistance.Distance, chargeLevel.CurrentChargeLevel, transId, true)
+	}
+	if chargeStations.Error.Valid {
+		logger.Error("error on fetching charging stations", chargeStations.Error.String)
+		fmt.Println("error on fetching charging stations", chargeStations.Error.String)
 		return generateExceptionResp(reqBody.Vin, reqBody.Source, reqBody.Destination, travelDistance.Distance, chargeLevel.CurrentChargeLevel, transId, true)
 	}
 	logger.Debug("chargeStations", chargeStations)
@@ -117,10 +132,10 @@ func computeArrival(reqBody *model.Request, transId int64) (response *model.Resp
 // getChargeLevel method handles the API call to retrieve current charge level
 func getChargeLevel(reqBody *model.Request) (*model.ResChargeLevel, error) {
 	defer metrics.MonitorTimeElapsed("constructing charge level")()
-	chargeLevelReq := *&model.ReqChargeLevel{
+	chargeLevelReq := &model.ReqChargeLevel{
 		Vin: reqBody.Vin,
 	}
-	chargeLevel, err := GetChargeLevel(&chargeLevelReq)
+	chargeLevel, err := GetChargeLevel(chargeLevelReq)
 	if err != nil {
 		return nil, err
 	}
@@ -130,11 +145,11 @@ func getChargeLevel(reqBody *model.Request) (*model.ResChargeLevel, error) {
 // getTravelDistance method handles the API call to retrieve the travel distance
 func getTravelDistance(reqBody *model.Request) (*model.ResTravelDistance, error) {
 	defer metrics.MonitorTimeElapsed("constructing travel distance")()
-	travelDistanceReq := *&model.ReqTravelDistance{
+	travelDistanceReq := &model.ReqTravelDistance{
 		Source:      reqBody.Source,
 		Destination: reqBody.Destination,
 	}
-	travelDistance, err := GetTravelDistance(&travelDistanceReq)
+	travelDistance, err := GetTravelDistance(travelDistanceReq)
 	if err != nil {
 		return nil, err
 	}
@@ -144,11 +159,11 @@ func getTravelDistance(reqBody *model.Request) (*model.ResTravelDistance, error)
 // getChargingStations method handles the API call to retrieve slice of charging stations between source and destination
 func getChargingStations(reqBody *model.Request) (*model.ResChargeStations, error) {
 	defer metrics.MonitorTimeElapsed("constructing charge stations")()
-	chargingStationsReq := *&model.ReqChargeStations{
+	chargingStationsReq := &model.ReqChargeStations{
 		Source:      reqBody.Source,
 		Destination: reqBody.Destination,
 	}
-	chargingStations, err := GetChargingStations(&chargingStationsReq)
+	chargingStations, err := GetChargingStations(chargingStationsReq)
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +178,8 @@ func generateExceptionResp(vin string, source string, dest string, distance int6
 	generateTechException := func() []*model.ResError {
 		resErrors := make([]*model.ResError, 0)
 		resError := &model.ResError{
-			ID:          9999,
-			Description: "Technical Exception",
+			ID:          util.ErrTechExpId,
+			Description: util.ErrTechExpMsg,
 		}
 		resErrors = append(resErrors, resError)
 		return resErrors
@@ -174,8 +189,8 @@ func generateExceptionResp(vin string, source string, dest string, distance int6
 	generateUnreachableException := func() []*model.ResError {
 		resErrors := make([]*model.ResError, 0)
 		resError := &model.ResError{
-			ID:          8888,
-			Description: "Unable to reach the destination with the current charge level",
+			ID:          util.ErrUnreachableId,
+			Description: util.ErrUnreachableMsg,
 		}
 		resErrors = append(resErrors, resError)
 		return resErrors
@@ -323,10 +338,10 @@ func computeRoute(chargingStations []*model.Station, availableCharge int64, dist
 	// handling edge case where the car hasn't reached the destination yet.
 	// The logic repeats the same step from above.
 
-	for availableCharge >= (distanceToDest - distanceTravelled) {
+	for availableCharge < (distanceToDest - distanceTravelled) {
 		// TODO: Recheck this computation, move to closure
-		logger.Debugf("checking if the car has reached the destination. availableCharge >= (distanceToDest - distanceTravelled) :: %v >= (%v - %v)\n", availableCharge, distanceTravelled, distanceToDest)
-		fmt.Printf("checking if the car has reached the destination. availableCharge >= (distanceToDest - distanceTravelled) :: %v >= (%v - %v)\n", availableCharge, distanceTravelled, distanceToDest)
+		logger.Debugf("checking if the car has reached the destination. availableCharge < (distanceToDest - distanceTravelled) :: %v >= (%v - %v) i.e, (%v)\n", availableCharge, distanceToDest, distanceTravelled, (distanceToDest - distanceTravelled))
+		fmt.Printf("checking if the car has reached the destination. availableCharge < (distanceToDest - distanceTravelled) :: %v >= (%v - %v) i.e, (%v)\n", availableCharge, distanceToDest, distanceTravelled, (distanceToDest - distanceTravelled))
 
 		// logger.Debugf("checking if the car can reach the destination with left over charge. availableCharge >= distanceToDest :: %v >= %v\n", availableCharge, distanceToDest)
 		// fmt.Printf("checking if the car can reach the destination with left over charge. availableCharge >= distanceToDest :: %v >= %v\n", availableCharge, distanceToDest)
