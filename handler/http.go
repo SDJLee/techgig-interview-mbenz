@@ -3,14 +3,15 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+
+	// "fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/SDJLee/mercedes-benz/metrics"
 	"github.com/SDJLee/mercedes-benz/model"
-	"github.com/SDJLee/mercedes-benz/util"
-	"github.com/spf13/viper"
+	// "github.com/SDJLee/mercedes-benz/util"
+	// "github.com/spf13/viper"
 )
 
 var defaultHeaders = map[string]string{
@@ -23,8 +24,8 @@ func GetChargeLevel(requestBody *model.ReqChargeLevel) (*model.ResChargeLevel, e
 	logger.Info("retrieving charge level data")
 	defer logger.Info("retrieved charge level data")
 	// url := "https://restmock.techgig.com/merc/charge_level"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charge_level"
-	url := fmt.Sprintf("%s/charge_level", viper.GetString(util.API_ADDRESS))
+	url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charge_level"
+	// url := fmt.Sprintf("%s/charge_level", viper.GetString(util.API_ADDRESS))
 	logger.Debugf("API url to retrieve charge level: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
@@ -52,8 +53,8 @@ func GetTravelDistance(requestBody *model.ReqTravelDistance) (*model.ResTravelDi
 	logger.Info("retrieving travel distance data")
 	defer logger.Info("retrieved travel distance data")
 	// url := "https://restmock.techgig.com/merc/distance"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/distance"
-	url := fmt.Sprintf("%s/distance", viper.GetString(util.API_ADDRESS))
+	url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/distance"
+	// url := fmt.Sprintf("%s/distance", viper.GetString(util.API_ADDRESS))
 	logger.Debugf("API url to retrieve travel distance: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
@@ -81,8 +82,8 @@ func GetChargingStations(requestBody *model.ReqChargeStations) (*model.ResCharge
 	logger.Info("retrieving charge stations data")
 	defer logger.Info("retrieved charge stations data")
 	// url := "https://restmock.techgig.com/merc/charging_stations"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charging_stations"
-	url := fmt.Sprintf("%s/charging_stations", viper.GetString(util.API_ADDRESS))
+	url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charging_stations"
+	// url := fmt.Sprintf("%s/charging_stations", viper.GetString(util.API_ADDRESS))
 	logger.Debugf("API url to retrieve charge stations: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)

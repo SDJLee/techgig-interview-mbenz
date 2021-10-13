@@ -41,9 +41,10 @@ func init() {
 		}, nil
 	})
 	cfg := zap.Config{
-		Encoding:      "json",
-		Level:         zap.NewAtomicLevelAt(zapcore.DebugLevel),
-		OutputPaths:   []string{"stdout", fmt.Sprintf("lumberjack:%s", logFile)}, // add logger path
+		Encoding:    "json",
+		Level:       zap.NewAtomicLevelAt(zapcore.DebugLevel),
+		OutputPaths: []string{fmt.Sprintf("lumberjack:%s", logFile)}, // add logger path
+		// OutputPaths:   []string{"stdout", fmt.Sprintf("lumberjack:%s", logFile)}, // add logger path
 		Development:   devMode,
 		EncoderConfig: encoderConfig,
 	}
