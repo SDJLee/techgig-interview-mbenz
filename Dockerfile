@@ -10,10 +10,13 @@ COPY . /app/
 WORKDIR /app
 
 # unit test case coverage
-RUN go test -v -coverpkg=./... -coverprofile=benz.cov ./...
+# RUN make test
+# RUN make cover
+
+RUN CGO_ENABLED=0 go test -v -coverpkg=./... -coverprofile=benz.cov ./...
 RUN go tool cover -func benz.cov
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o benz "main.go"
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./dist/benz "main.go"
 
 ## stage 2 - use lighter alpine base and expose entry
 FROM alpine:latest

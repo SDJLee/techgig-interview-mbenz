@@ -1,0 +1,48 @@
+version: '3.2'
+
+services:
+  elk:
+    image: sebp/elk
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+    networks:
+      - elk
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    ports:
+      - 3000:3000
+    networks:
+      - grafana-net
+    volumes:
+      - grafana-data:/var/lib/grafana
+  graphite:
+    image: graphiteapp/graphite-statsd
+    container_name: graphite
+    restart: always
+    networks:
+      - grafana-net
+  merc-benz-route-checker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8080:8080
+    networks:
+      - app
+    depends_on:
+      - elk
+      - graphite
+networks:
+  elk:
+    driver: bridge
+  app:
+    driver: bridge
+  grafana-net:
+    driver: bridge
+volumes:
+  grafana-data:
+    external: true
