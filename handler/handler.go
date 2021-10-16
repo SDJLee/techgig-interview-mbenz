@@ -29,7 +29,7 @@ func HandleFuelCheck(c *gin.Context) {
 		return
 	}
 	incrementRequestCount()
-	response := computeArrival(&reqBody, getRequests())
+	response := computeTravel(&reqBody, getRequests())
 	c.JSON(http.StatusOK, response)
 }
 
@@ -42,6 +42,11 @@ func getRequests() int64 {
 }
 
 func SetupRouter() http.Handler {
+	env := util.GetEnv()
+	if env == util.EnvProd {
+		logger.Info("setting up router in prod mode")
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.New()
 
 	router.Use(metrics.MeasureApiComputationTime())

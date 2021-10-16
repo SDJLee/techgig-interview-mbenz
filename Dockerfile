@@ -2,6 +2,7 @@
 
 # stage 1 - build golang binary
 FROM golang:1.15-buster as builder
+ARG mode
 
 ENV GO111MODULE=on
 
@@ -9,27 +10,21 @@ COPY . /app/
 
 WORKDIR /app
 
-# unit test case coverage
-# RUN make test
-# RUN make cover
-
-RUN CGO_ENABLED=0 go test -v -coverpkg=./... -coverprofile=benz.cov ./...
-RUN go tool cover -func benz.cov
-
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./dist/benz "main.go"
 
 ## stage 2 - use lighter alpine base and expose entry
 FROM alpine:latest
+ARG mode
 
 # app metada
 LABEL app="benz"
 LABEL version="0.0.1"
 
-COPY --from=builder /app/benz /app/
+COPY --from=builder /app/dist/benz /app/
 COPY --from=builder /app/app-dev.env /app/
 COPY --from=builder /app/app-prod.env /app/
 
-ENV APP_ENV=dev
+ENV APP_ENV=$mode
 ENV BASE_PATH=/app
 
 EXPOSE 8080

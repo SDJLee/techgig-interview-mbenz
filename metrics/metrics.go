@@ -11,7 +11,7 @@ import (
 // Current implementation is a scaffold and the instrumentation are logged. This should be enhanced to connect
 // with an instrumentation tool.
 
-var logger = log.SubLogger("merc-benz-route-checker-metrics")
+var metricsLogger = log.SubLogger("metrics")
 
 // MonitorTimeElapsed reports the time elapsed to execute a function.
 // To use this, add it in defer at beginning of a function like below code.
@@ -19,7 +19,7 @@ var logger = log.SubLogger("merc-benz-route-checker-metrics")
 func MonitorTimeElapsed(what string) func() {
 	start := time.Now()
 	return func() {
-		logger.Infof("%s took %v\n", what, time.Since(start))
+		metricsLogger.Infof("%s took %v\n", what, time.Since(start))
 	}
 }
 
@@ -29,7 +29,7 @@ func MeasureApiComputationTime() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		defer func() {
-			logger.Infof("%s took %v\n", c.Request.URL.Path, time.Since(start))
+			metricsLogger.Infof("%s took %v\n", c.Request.URL.Path, time.Since(start))
 		}()
 		c.Next()
 	}

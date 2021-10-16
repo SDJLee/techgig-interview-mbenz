@@ -43,7 +43,6 @@ func TestHealthCheckHandler(t *testing.T) {
 	}
 }
 
-//{ "transactionId": 2, "vin": "W1K2062161F0033", "source": "Home", "destination": "Lake", "distance": 20, "currentChargeLevel": 93, "isChargingRequired": false }
 func TestCase1(t *testing.T) {
 
 	responseBody, err := performApiCall(reqTestCase1, t)
@@ -73,7 +72,6 @@ func TestCase1(t *testing.T) {
 	}
 }
 
-//{ "transactionId": 3, "vin": "W1K2062161F0080", "source": "Home", "destination": "Airport", "distance": 60, "currentChargeLevel": 2, "isChargingRequired": true, "errors": [ { "id": 8888, "description": "Unable to reach the destination with the current fuel level" } ] }
 func TestCase2(t *testing.T) {
 
 	responseBody, err := performApiCall(reqTestCase2, t)
@@ -128,7 +126,6 @@ func TestCase2(t *testing.T) {
 
 }
 
-// {"transactionId": 1,"errors": [{"id": 9999,"description": "Technical Exception"}]}
 func TestCase3(t *testing.T) {
 
 	responseBody, err := performApiCall(reqTestCase3, t)
@@ -265,7 +262,7 @@ func TestCase5(t *testing.T) {
 		Distance: 40,
 	}
 
-	stationsVisited, err := computeRoute(everyStation, 17, 50)
+	stationsVisited, err := computeRoute(everyStation, 17, 50, "W1K2062161F0046")
 
 	if err != nil {
 		t.Error("test case shouldn't return error")
@@ -316,7 +313,7 @@ func TestCase6(t *testing.T) {
 		Distance: 40,
 	}
 
-	stationsVisited, err := computeRoute(everyStation, 17, 90)
+	stationsVisited, err := computeRoute(everyStation, 17, 90, "W1K2062161F0046")
 
 	if err != nil {
 		t.Error("test case shouldn't return error")

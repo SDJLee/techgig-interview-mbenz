@@ -25,19 +25,16 @@ func serve() {
 		readTimeout = 15
 	}
 	logger.Infof("attempting to serve in port '%d' \n", port)
-	fmt.Printf("attempting to serve in port '%d' \n", port)
 	router := handler.SetupRouter()
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         fmt.Sprintf("localhost:%d", port),
+		Addr:         fmt.Sprintf(":%d", port),
 		WriteTimeout: time.Duration(writeTimeout) * time.Second,
 		ReadTimeout:  time.Duration(readTimeout) * time.Second,
 	}
 	logger.Info("Server started and listening on the port: ", port)
-	fmt.Println("Server started and listening on the port: ", port)
 	if err := srv.ListenAndServe(); err != nil {
 		logger.Error("failed to start merc-benz-route-checker", err)
-		fmt.Println("failed to start merc-benz-route-checker", err)
 		panic(err)
 	}
 }

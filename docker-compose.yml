@@ -8,7 +8,7 @@ services:
       - "9200:9200"
       - "5044:5044"
     networks:
-      - elk
+      - app-network
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -16,33 +16,28 @@ services:
     ports:
       - 3000:3000
     networks:
-      - grafana-net
+      - app-network
     volumes:
-      - grafana-data:/var/lib/grafana
+      - $PWD/data/grafana:/var/lib/grafana
   graphite:
     image: graphiteapp/graphite-statsd
     container_name: graphite
     restart: always
     networks:
-      - grafana-net
+      - app-network
   merc-benz-route-checker:
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
       - 8080:8080
+    expose: 
+      - 8080
     networks:
-      - app
+      - app-network
     depends_on:
       - elk
       - graphite
 networks:
-  elk:
+  app-network:
     driver: bridge
-  app:
-    driver: bridge
-  grafana-net:
-    driver: bridge
-volumes:
-  grafana-data:
-    external: true

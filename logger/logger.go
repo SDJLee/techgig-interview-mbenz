@@ -1,7 +1,9 @@
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 
 	"github.com/SDJLee/mercedes-benz/util"
@@ -12,9 +14,11 @@ import (
 )
 
 // As of now, the logs are written to log files.
-// Future plan for this package is to push the logs into ELK stack.
+// If ELK stack is available, configurations are available in this package to push the logs into ELK stack.
 
 var slogger *zap.SugaredLogger
+var queue = make(chan []byte, 10000)
+var tag string = "merc-benz-route-checker"
 
 type lumberjackSink struct {
 	*lumberjack.Logger
@@ -25,13 +29,12 @@ func (lumberjackSink) Sync() error {
 }
 
 func init() {
-	logFile := viper.GetString(util.LogPath)
-	// logFile := "./test.log"
-	env := viper.GetString(util.AppEnv)
+	env := util.GetEnv()
 	devMode := false
-	if env == "dev" || env == "" {
+	if env == util.EnvDev || env == "" {
 		devMode = true
 	}
+	logFile := fmt.Sprintf("/var/log/%v.log", tag)
 	logWriter := getLogWriter(logFile)
 	encoderConfig := getEncoderConfig(devMode)
 	zap.RegisterSink("lumberjack", func(*url.URL) (zap.Sink, error) {
@@ -49,9 +52,21 @@ func init() {
 	}
 	cfg.EncoderConfig = encoderConfig
 
-	logger, err := cfg.Build(
-		zap.Fields(zap.String("tag", "merc-benz-route-checker")),
-	)
+	var logger *zap.Logger
+	var err error
+	if viper.GetString(util.ShipLogs) == "true" {
+		logger, err = cfg.Build(
+			zap.Fields(zap.String("tag", tag)),
+			// Enable this in an environment where ELK stack is available and respective configurations are added
+			// zap.Hooks(logstashHook),
+		)
+		// Enable this in an environment where ELK stack is available and respective configurations are added
+		// go logstashEmitter()
+	} else {
+		logger, err = cfg.Build(
+			zap.Fields(zap.String("tag", tag)),
+		)
+	}
 	if err != nil {
 		fmt.Println("error creating shared logger", err)
 		return
@@ -79,6 +94,7 @@ func getEncoderConfig(devMode bool) zapcore.EncoderConfig {
 	return encoderConfig
 }
 
+// lumberjack configuration for log rotation and writing
 func getLogWriter(logFile string) *lumberjack.Logger {
 	lumberJackLogger := &lumberjack.Logger{
 		Filename:   logFile,
@@ -96,4 +112,54 @@ func Logger() *zap.SugaredLogger {
 
 func SubLogger(name string) *zap.SugaredLogger {
 	return slogger.Named(name)
+}
+
+// logstash hook to push logs into logstash
+func logstashHook(e zapcore.Entry) error {
+	serialized, err := format(&e)
+	if err != nil {
+		return err
+	}
+	queue <- serialized
+	return nil
+}
+
+// emitter transports logs to logstash
+func logstashEmitter() {
+	logstashHost := viper.GetString("logstash")
+	conn, err := net.Dial("tcp", logstashHost)
+	defer conn.Close()
+	for msg := range queue {
+		if err != nil {
+			_ = fmt.Errorf("could not connect to logstash host")
+			continue
+		}
+
+		_, err = conn.Write(msg)
+		if err != nil {
+			_ = fmt.Errorf(err.Error())
+		}
+	}
+
+}
+
+// formats the logs
+func format(e *zapcore.Entry) ([]byte, error) {
+	fields := make(map[string]string)
+
+	fields["level"] = e.Level.CapitalString()
+	fields["message"] = e.Message
+	fields["ex"] = e.Stack
+	fields["timestamp"] = e.Time.String()
+	fields["caller"] = e.Caller.String()
+	fields["tag"] = tag
+
+	serialized, err := json.Marshal(fields)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't convert log message to json: %s", err)
+	}
+
+	// append newline to message so logstash doesn't choke on it
+	serialized = append(serialized, "\n"...)
+	return serialized, nil
 }

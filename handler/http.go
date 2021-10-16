@@ -19,12 +19,11 @@ var defaultHeaders = map[string]string{
 	"Response-Type": "application/json",
 }
 
+// retrieves current charge level
 func GetChargeLevel(requestBody *model.ReqChargeLevel) (*model.ResChargeLevel, error) {
-	defer metrics.MonitorTimeElapsed("retrieving charge level data")()
+	defer metrics.StatTime("api.chargelevel")()
 	logger.Info("retrieving charge level data")
 	defer logger.Info("retrieved charge level data")
-	// url := "https://restmock.techgig.com/merc/charge_level"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charge_level"
 	url := fmt.Sprintf("%s/charge_level", viper.GetString(util.ApiAddress))
 	logger.Debugf("API url to retrieve charge level: %s", url)
 
@@ -43,17 +42,14 @@ func GetChargeLevel(requestBody *model.ReqChargeLevel) (*model.ResChargeLevel, e
 	if err != nil {
 		return nil, err
 	}
-	// TODO: remove this
-	// fmt.Println("response ChargeLevel", response)
 	return response, nil
 }
 
+// retrieves travel distance
 func GetTravelDistance(requestBody *model.ReqTravelDistance) (*model.ResTravelDistance, error) {
-	defer metrics.MonitorTimeElapsed("retrieving travel distance data")()
+	defer metrics.StatTime("api.traveldistance")()
 	logger.Info("retrieving travel distance data")
 	defer logger.Info("retrieved travel distance data")
-	// url := "https://restmock.techgig.com/merc/distance"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/distance"
 	url := fmt.Sprintf("%s/distance", viper.GetString(util.ApiAddress))
 	logger.Debugf("API url to retrieve travel distance: %s", url)
 
@@ -72,17 +68,14 @@ func GetTravelDistance(requestBody *model.ReqTravelDistance) (*model.ResTravelDi
 	if err != nil {
 		return nil, err
 	}
-	// TODO: remove this
-	// fmt.Println("response TravelDistance", response)
 	return response, nil
 }
 
+// retrieves charging stations
 func GetChargingStations(requestBody *model.ReqChargeStations) (*model.ResChargeStations, error) {
-	defer metrics.MonitorTimeElapsed("retrieving charge stations data")()
+	defer metrics.StatTime("api.chargestation")()
 	logger.Info("retrieving charge stations data")
 	defer logger.Info("retrieved charge stations data")
-	// url := "https://restmock.techgig.com/merc/charging_stations"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charging_stations"
 	url := fmt.Sprintf("%s/charging_stations", viper.GetString(util.ApiAddress))
 	logger.Debugf("API url to retrieve charge stations: %s", url)
 
@@ -101,11 +94,10 @@ func GetChargingStations(requestBody *model.ReqChargeStations) (*model.ResCharge
 	if err != nil {
 		return nil, err
 	}
-	// TODO: remove this
-	// fmt.Println("response ChargeStations", response)
 	return response, nil
 }
 
+// common method to perform http post request
 func makePostRequest(url string, bytePayload []byte) ([]byte, error) {
 	bufferPayload := bytes.NewBuffer(bytePayload)
 	client := &http.Client{}
@@ -132,8 +124,5 @@ func makePostRequest(url string, bytePayload []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: remove this
-	// fmt.Println("PostRequest", string(responseByte))
 	return responseByte, nil
 }

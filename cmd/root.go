@@ -29,16 +29,9 @@ func init() {
 }
 
 func loadConfig() {
-	os.Setenv(util.AppEnv, util.EnvDev)
-	os.Setenv(util.BasePath, "/home/ubuntu/Applications/go1.14/src/github.com/SDJLee/techgig-interview-mbenz")
-	fmt.Println("env str", os.Getenv(util.AppEnv))
-	env := os.Getenv(util.AppEnv)
-	if env == "" {
-		env = util.EnvDev
-	}
-
-	fmt.Println("base path str", os.Getenv(util.BasePath))
+	env := util.GetEnv()
 	basePath := os.Getenv(util.BasePath)
+	fmt.Printf("loadConfig basePath from os '%v'\n", basePath)
 	if basePath == "" {
 		basePath = util.DefaultBasePath
 	}
