@@ -16,7 +16,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./dist/benz "main.go"
 FROM alpine:latest
 ARG mode
 
-# app metada
 LABEL app="benz"
 LABEL version="0.0.1"
 

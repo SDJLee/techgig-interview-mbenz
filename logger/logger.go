@@ -58,10 +58,10 @@ func init() {
 		logger, err = cfg.Build(
 			zap.Fields(zap.String("tag", tag)),
 			// Enable this in an environment where ELK stack is available and respective configurations are added
-			// zap.Hooks(logstashHook),
+			zap.Hooks(logstashHook),
 		)
 		// Enable this in an environment where ELK stack is available and respective configurations are added
-		// go logstashEmitter()
+		go logstashEmitter()
 	} else {
 		logger, err = cfg.Build(
 			zap.Fields(zap.String("tag", tag)),
@@ -126,8 +126,8 @@ func logstashHook(e zapcore.Entry) error {
 
 // emitter transports logs to logstash
 func logstashEmitter() {
-	logstashHost := viper.GetString("logstash")
-	conn, err := net.Dial("tcp", logstashHost)
+	// logstashHost := viper.GetString("logstash")
+	conn, err := net.Dial("tcp", "logstash:8089")
 	defer conn.Close()
 	for msg := range queue {
 		if err != nil {
