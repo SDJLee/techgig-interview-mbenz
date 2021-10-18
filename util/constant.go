@@ -21,5 +21,5 @@ const (
 	ErrUnreachableMsg  = "Unable to reach the destination with the current charge level"
 	ErrTechExpId       = 9999
 	ErrTechExpMsg      = "Technical Exception"
-	ShipLogs           = "SHIP_LOGS"
+	ShipLogs           = "SHIPLOGS"
 )

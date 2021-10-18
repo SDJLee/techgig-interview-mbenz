@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 
 	"github.com/SDJLee/mercedes-benz/util"
 	"github.com/natefinch/lumberjack"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -29,11 +29,13 @@ func (lumberjackSink) Sync() error {
 }
 
 func init() {
+	fmt.Println("logger init")
 	env := util.GetEnv()
 	devMode := false
 	if env == util.EnvDev || env == "" {
 		devMode = true
 	}
+	fmt.Println("is dev mode?", devMode)
 	logFile := fmt.Sprintf("/var/log/%v.log", tag)
 	logWriter := getLogWriter(logFile)
 	encoderConfig := getEncoderConfig(devMode)
@@ -42,6 +44,7 @@ func init() {
 			Logger: logWriter,
 		}, nil
 	})
+	fmt.Println("conf......")
 	cfg := zap.Config{
 		Encoding:    "json",
 		Level:       zap.NewAtomicLevelAt(zapcore.DebugLevel),
@@ -51,10 +54,11 @@ func init() {
 		EncoderConfig: encoderConfig,
 	}
 	cfg.EncoderConfig = encoderConfig
-
+	fmt.Println("building logger")
 	var logger *zap.Logger
 	var err error
-	if viper.GetString(util.ShipLogs) == "true" {
+	fmt.Printf("ship logs? '%s' \n", os.Getenv(util.ShipLogs))
+	if os.Getenv(util.ShipLogs) == "true" {
 		logger, err = cfg.Build(
 			zap.Fields(zap.String("tag", tag)),
 			// Enable this in an environment where ELK stack is available and respective configurations are added
@@ -116,10 +120,13 @@ func SubLogger(name string) *zap.SugaredLogger {
 
 // logstash hook to push logs into logstash
 func logstashHook(e zapcore.Entry) error {
+	fmt.Println("logstash hook")
 	serialized, err := format(&e)
 	if err != nil {
+		fmt.Println("logstash hook format error", err)
 		return err
 	}
+	fmt.Println("Pushing log to logstash queue")
 	queue <- serialized
 	return nil
 }
@@ -131,12 +138,15 @@ func logstashEmitter() {
 	defer conn.Close()
 	for msg := range queue {
 		if err != nil {
+			fmt.Println("Couldn't connect to logstash ", err)
 			_ = fmt.Errorf("could not connect to logstash host")
 			continue
 		}
 
+		fmt.Println("writing message to logstash", msg)
 		_, err = conn.Write(msg)
 		if err != nil {
+			fmt.Println("writing failed ", err)
 			_ = fmt.Errorf(err.Error())
 		}
 	}

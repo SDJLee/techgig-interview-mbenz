@@ -46,32 +46,36 @@ services:
     ports:
       - 3000:3000
     networks:
-      - app-network
+      - metrics
     volumes:
       - $PWD/data/grafana:/var/lib/grafana
   graphite:
     image: graphiteapp/graphite-statsd
     container_name: graphite
     restart: always
+    ports:
+      - 8081:80
     networks:
-      - app-network
+      - metrics
   merc-benz-route-checker:
     build:
       context: .
       dockerfile: ./Dockerfile
       args:
-        mode: ${mode}
+        MODE: ${MODE}
+        SHIPLOGS: ${SHIPLOGS}
     ports:
       - 8080:8080
     expose: 
       - 8080
     networks:
-      - app-network
+      - metrics
+      - elknetwork
     depends_on:
       - logstash
       - graphite
 networks:
-  app-network:
+  metrics:
     driver: bridge
   elknetwork:
     driver: bridge
