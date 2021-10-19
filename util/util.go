@@ -7,7 +7,6 @@ import (
 
 func GetEnv() string {
 	env := os.Getenv(AppEnv)
-	fmt.Printf("getEnv from os '%v'\n", env)
 	if env == "" {
 		env = EnvDev
 	}

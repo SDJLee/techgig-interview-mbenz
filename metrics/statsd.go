@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	log "github.com/SDJLee/mercedes-benz/logger"
@@ -33,7 +34,7 @@ func StatTime(metric string) func() {
 // pushes metrics into graphite's udp port
 func statsdSender() {
 	for msg := range queue {
-		conn, err := net.Dial("udp", "graphite:8125")
+		conn, err := net.Dial("udp", os.Getenv("GRAPHITE_URL"))
 		if err != nil {
 			statsLogger.Error("could not connect to statsd")
 			continue

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 
 	"github.com/SDJLee/mercedes-benz/util"
 	"github.com/natefinch/lumberjack"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -51,17 +51,16 @@ func init() {
 		EncoderConfig: encoderConfig,
 	}
 	cfg.EncoderConfig = encoderConfig
-
 	var logger *zap.Logger
 	var err error
-	if viper.GetString(util.ShipLogs) == "true" {
+	if os.Getenv(util.ShipLogs) == "true" {
 		logger, err = cfg.Build(
 			zap.Fields(zap.String("tag", tag)),
 			// Enable this in an environment where ELK stack is available and respective configurations are added
-			// zap.Hooks(logstashHook),
+			zap.Hooks(logstashHook),
 		)
 		// Enable this in an environment where ELK stack is available and respective configurations are added
-		// go logstashEmitter()
+		go logstashEmitter()
 	} else {
 		logger, err = cfg.Build(
 			zap.Fields(zap.String("tag", tag)),
@@ -126,19 +125,17 @@ func logstashHook(e zapcore.Entry) error {
 
 // emitter transports logs to logstash
 func logstashEmitter() {
-	logstashHost := viper.GetString("logstash")
-	conn, err := net.Dial("tcp", logstashHost)
-	defer conn.Close()
+	conn, err := net.Dial("tcp", os.Getenv("LOGSTASH_URL"))
+	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
+	}()
 	for msg := range queue {
 		if err != nil {
-			_ = fmt.Errorf("could not connect to logstash host")
 			continue
 		}
-
-		_, err = conn.Write(msg)
-		if err != nil {
-			_ = fmt.Errorf(err.Error())
-		}
+		_, _ = conn.Write(msg)
 	}
 
 }

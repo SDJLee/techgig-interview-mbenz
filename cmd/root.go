@@ -31,7 +31,6 @@ func init() {
 func loadConfig() {
 	env := util.GetEnv()
 	basePath := os.Getenv(util.BasePath)
-	fmt.Printf("loadConfig basePath from os '%v'\n", basePath)
 	if basePath == "" {
 		basePath = util.DefaultBasePath
 	}
