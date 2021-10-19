@@ -17,6 +17,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./dist/benz "main.go"
 FROM alpine:latest
 ARG MODE
 ARG SHIPLOGS
+ARG GRAPHITE_URL
+ARG LOGSTASH_URL
 
 LABEL app="benz"
 LABEL version="0.0.1"
@@ -27,6 +29,8 @@ COPY --from=builder /app/app-prod.env /app/
 
 ENV APP_ENV=$MODE
 ENV SHIPLOGS=$SHIPLOGS
+ENV LOGSTASH_URL=$LOGSTASH_URL
+ENV GRAPHITE_URL=$GRAPHITE_URL
 ENV BASE_PATH=/app
 
 EXPOSE 8080

@@ -64,6 +64,8 @@ services:
       args:
         MODE: ${MODE}
         SHIPLOGS: ${SHIPLOGS}
+        GRAPHITE_URL: ${GRAPHITE_URL}
+        LOGSTASH_URL: ${LOGSTASH_URL}
     ports:
       - 8080:8080
     expose: 

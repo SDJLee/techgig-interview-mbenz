@@ -126,7 +126,7 @@ func logstashHook(e zapcore.Entry) error {
 
 // emitter transports logs to logstash
 func logstashEmitter() {
-	conn, err := net.Dial("tcp", "logstash:8089")
+	conn, err := net.Dial("tcp", os.Getenv("LOGSTASH_URL"))
 	defer func() {
 		if conn != nil {
 			conn.Close()

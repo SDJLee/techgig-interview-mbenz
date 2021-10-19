@@ -71,3 +71,6 @@ The above steps can be covered in jenkins pipeline to automate the build and dep
 ## Addition of .env files
 
 The `app-dev.env` and `app-prod.env` files haven't been removed for reference.
+
+
+MODE=prod SHIPLOGS=true GRAPHITE_URL=graphite:8125 LOGSTASH_URL=logstash:8089 docker-compose up -d 
