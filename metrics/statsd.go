@@ -36,7 +36,6 @@ func statsdSender() {
 	for msg := range queue {
 		conn, err := net.Dial("udp", os.Getenv("GRAPHITE_URL"))
 		if err != nil {
-			statsLogger.Error("could not connect to statsd")
 			continue
 		}
 

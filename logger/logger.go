@@ -31,10 +31,12 @@ func (lumberjackSink) Sync() error {
 func init() {
 	env := util.GetEnv()
 	devMode := false
+	logFile := fmt.Sprintf("/var/log/%v.log", tag)
+	outputPath := []string{fmt.Sprintf("lumberjack:%s", logFile)}
 	if env == util.EnvDev || env == "" {
 		devMode = true
+		outputPath = []string{"stdout", fmt.Sprintf("lumberjack:%s", logFile)}
 	}
-	logFile := fmt.Sprintf("/var/log/%v.log", tag)
 	logWriter := getLogWriter(logFile)
 	encoderConfig := getEncoderConfig(devMode)
 	zap.RegisterSink("lumberjack", func(*url.URL) (zap.Sink, error) {
@@ -43,10 +45,9 @@ func init() {
 		}, nil
 	})
 	cfg := zap.Config{
-		Encoding:    "json",
-		Level:       zap.NewAtomicLevelAt(zapcore.DebugLevel),
-		OutputPaths: []string{fmt.Sprintf("lumberjack:%s", logFile)}, // add logger path
-		// OutputPaths:   []string{"stdout", fmt.Sprintf("lumberjack:%s", logFile)}, // add logger path
+		Encoding:      "json",
+		Level:         zap.NewAtomicLevelAt(zapcore.DebugLevel),
+		OutputPaths:   outputPath,
 		Development:   devMode,
 		EncoderConfig: encoderConfig,
 	}
@@ -126,16 +127,19 @@ func logstashHook(e zapcore.Entry) error {
 // emitter transports logs to logstash
 func logstashEmitter() {
 	conn, err := net.Dial("tcp", os.Getenv("LOGSTASH_URL"))
+	if err != nil {
+		return
+	}
 	defer func() {
 		if conn != nil {
 			conn.Close()
 		}
 	}()
 	for msg := range queue {
+		_, err = conn.Write(msg)
 		if err != nil {
-			continue
+			fmt.Println("failed to push log to logstash", err)
 		}
-		_, _ = conn.Write(msg)
 	}
 
 }
