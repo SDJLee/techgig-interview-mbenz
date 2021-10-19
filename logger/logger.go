@@ -29,13 +29,11 @@ func (lumberjackSink) Sync() error {
 }
 
 func init() {
-	fmt.Println("logger init")
 	env := util.GetEnv()
 	devMode := false
 	if env == util.EnvDev || env == "" {
 		devMode = true
 	}
-	fmt.Println("is dev mode?", devMode)
 	logFile := fmt.Sprintf("/var/log/%v.log", tag)
 	logWriter := getLogWriter(logFile)
 	encoderConfig := getEncoderConfig(devMode)
@@ -44,7 +42,6 @@ func init() {
 			Logger: logWriter,
 		}, nil
 	})
-	fmt.Println("conf......")
 	cfg := zap.Config{
 		Encoding:    "json",
 		Level:       zap.NewAtomicLevelAt(zapcore.DebugLevel),
@@ -54,7 +51,6 @@ func init() {
 		EncoderConfig: encoderConfig,
 	}
 	cfg.EncoderConfig = encoderConfig
-	fmt.Println("building logger")
 	var logger *zap.Logger
 	var err error
 	fmt.Printf("ship logs? '%s' \n", os.Getenv(util.ShipLogs))
@@ -120,35 +116,27 @@ func SubLogger(name string) *zap.SugaredLogger {
 
 // logstash hook to push logs into logstash
 func logstashHook(e zapcore.Entry) error {
-	fmt.Println("logstash hook")
 	serialized, err := format(&e)
 	if err != nil {
-		fmt.Println("logstash hook format error", err)
 		return err
 	}
-	fmt.Println("Pushing log to logstash queue")
 	queue <- serialized
 	return nil
 }
 
 // emitter transports logs to logstash
 func logstashEmitter() {
-	// logstashHost := viper.GetString("logstash")
 	conn, err := net.Dial("tcp", "logstash:8089")
-	defer conn.Close()
+	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
+	}()
 	for msg := range queue {
 		if err != nil {
-			fmt.Println("Couldn't connect to logstash ", err)
-			_ = fmt.Errorf("could not connect to logstash host")
 			continue
 		}
-
-		fmt.Println("writing message to logstash", msg)
-		_, err = conn.Write(msg)
-		if err != nil {
-			fmt.Println("writing failed ", err)
-			_ = fmt.Errorf(err.Error())
-		}
+		_, _ = conn.Write(msg)
 	}
 
 }
