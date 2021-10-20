@@ -128,6 +128,7 @@ func logstashHook(e zapcore.Entry) error {
 func logstashEmitter() {
 	conn, err := net.Dial("tcp", os.Getenv("LOGSTASH_URL"))
 	if err != nil {
+		fmt.Println("logstash connection error", err)
 		return
 	}
 	defer func() {
