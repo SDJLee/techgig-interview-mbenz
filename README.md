@@ -49,9 +49,9 @@ Use the below command to build the docker using [Dockerfile](./Dockerfile).
 
 #### With log analysis and metrics instrumentation
 
-Assuming satsd and logstash are running in `localhost:8125` and `localhost:8089` respectively, run the below build command.
+Assuming statsd and logstash are running in `<docker_ip>:8125` and `<docker_ip>:8089` respectively, run the below build command.
 
-`docker build . -t merc-benz-route-checker --build-arg MODE=prod --build-arg SHIPLOGS=true --build-arg GRAPHITE_URL=graphite:8125 --build-arg LOGSTASH_URL=logstash:8089`
+`docker build . -t merc-benz-route-checker --build-arg MODE=prod --build-arg SHIPLOGS=true --build-arg GRAPHITE_URL=<docker_ip>:8125 --build-arg LOGSTASH_URL=<docker_ip>:8089`
 
 ##### Flags
 
