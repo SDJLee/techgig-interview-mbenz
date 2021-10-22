@@ -7,39 +7,94 @@ The application is to identify the minimum number of stations required to stop f
 ## Tech stack
 
 * Language: golang
-* Http web framework: [Gin](https://github.com/gin-gonic/gin)
+* [Gin](https://github.com/gin-gonic/gin) for Http web framework
+* [Zap logger](https://github.com/uber-go/zap) for logging
+* [Lubmerjack](https://github.com/natefinch/lumberjack) for log writing and rotation
 * Docker containerization
+* ELK stack for log analysis
+* Graphite, Statsd and Grafana for metric collection and visualization
 
-## Running the app (without containerization)
+## Log analysis and Instrumentation
 
-The below command generates a linux build under the path `./dist/benz`
-
-`CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./dist/benz "main.go"`
-
-After building the app, run the app with the command `./benz` under the `./dist` folder.
+* By using ELK stack, the microservice can push logs into logstash in the port `8089` which can be visualized in kibana.
+* By using statsd, the microservice pushes metrics into graphite in the port `8125`. These can be visualized in grafana.
+    * The dashboard config for the microservice can be found in [graphite-dashboard.json](./graphite-dashboard.json)
+* This repo doesn't include setup for ELK stack, Graphite, Statsd or Grafana. The microservice is coded in a way that it will push logs and metrics if the URL is configured.
 
 ## Running the app using docker
 
-### Building docker image
+### Run from docker hub
 
-Use the below command to build the docker using `Dockerfile`.
+Use the below command to run the docker container from docker hub
 
-`docker build . -t benz-service --build-arg mode=prod`
+#### Without log analysis and metrics instrumentation
 
-### Running the container
+Use the below command to build the docker image from dockerhub.
 
-Use the below command to run the docker image that was built in the previous command.
+`sudo docker run --name=merc-benz-route-checker --network="host" -p 8080:8080 sdjthedeveloper/merc-benz-route-checker:prod`
 
-`docker run -p 8080:8080 --name benz-service <image id>`
+This image is prebuilt without logstash or statsd configured. To test the API, use the postman collection in [merc-benz-route-checker.postman_collection.json](./postman-collection/merc-benz-route-checker.postman_collection.json)
 
-Once the docker container is up, the APIs can be accessed under the host address `http://localhost:8080`
+#### With log analysis and metrics instrumentation
+
+To run the image with ELK stack and instrumentation, the required services should be running. I have created a separate repo [techgig-interview-mbenz-containerized](https://github.com/SDJLee/techgig-interview-mbenz-containerized) that has a `docker-compose.yml` to bring up the microservice along with other services.
+
+### Run in local by building a docker image
+
+Use the below command to build the docker using [Dockerfile](./Dockerfile).
+
+#### Without log analysis and metrics instrumentation
+
+`docker build . -t merc-benz-route-checker --build-arg MODE=prod`
+
+#### With log analysis and metrics instrumentation
+
+Assuming satsd and logstash are running in `localhost:8125` and `localhost:8089` respectively, run the below build command.
+
+`docker build . -t merc-benz-route-checker --build-arg MODE=prod --build-arg SHIPLOGS=true --build-arg GRAPHITE_URL=graphite:8125 --build-arg LOGSTASH_URL=logstash:8089`
+
+##### Flags
+
+* MODE
+    * Says whether the build is development or production.
+    * Values are `prod` or `dev`.
+    * If left empty, default build mode is `dev`.
+* SHIPLOGS
+    * Set `true` if the logs should be shipped into logstash.
+    * By default, it is `false`.
+    * When set `true`, make sure logstash service is up and accessible by the microservice.
+* GRAPHITE_URL
+    * URL for statsd
+* LOGSTASH_URL
+    * URL for logstash
+
+#### Running the container
+
+Use the below command to run the docker image that was built with any of the previous command.
+
+`docker run -p 8080:8080 --name merc-benz-route-checker <image id>`
+
+Once the docker container is up, the APIs can be accessed under the host address [http://localhost:8080](http://localhost:8080)
+
+## Working Prototype
+
+The microservice has been deployed in AWS along with ELK stack, Graphite, Statsd and Grafana. These services are available in below URLs. The URLs to access the services will be attached in the PPT submitted along with the interview.
+
+### To the interviewer
+If the working prototype is not accessible, mail me at [mail.soundar.rajan@gmail.com](mail.soundar.rajan@gmail.com). I might have shut the services down for cost concerns.
 
 ## APIs
 
-The below APIs are available in the service
+### Local build
 
-* `http://localhost:8080/api/health` - health check API
-* `http://localhost:8080/api/v1/compute-route` - API to compute route with minimum number of stops
+For a local build, the below are the APIs available. The same can be found under the postman collection [merc-benz-route-checker.postman_collection.json](./postman-collection/merc-benz-route-checker.postman_collection.json)
+
+* [http://localhost:8080/api/health](http://localhost:8080/api/health) - health check API
+* [http://localhost:8080/api/v1/compute-route](http://localhost:8080/api/v1/compute-route) - API to compute route with minimum number of stops
+
+### Working prototype
+
+To test the working prototype, use the postman collection [merc-benz-route-checker.postman_collection.json](./postman-collection/merc-benz-route-checker.postman_collection.json). Try out the APIs by updating the API URL with the one provided in the PPT.
 
 ## About the logic to find the minimum number of charging station
 
@@ -55,22 +110,6 @@ The time complexity of this logic is O(nlog(n)). We iterate n times and greedily
 
 The space complexity of this logic is O(n)
 
-
-## Support for ELK stack
-
-ELK stack is used to push and analyse logs. If the microservices environment supports ELK stack, then this service can be leveraged/configured to work with it. The code is available in the service but commented out.
-
-## Support for instrumentation
-
-Code for instrumentation is added. If the microservices environment supports instrumentation/observability tool like graphite, this microservice can be configured to it.
-
-## Adding CI/CD jenkins pipeline
-
-The above steps can be covered in jenkins pipeline to automate the build and deploy it into the microservice environment.
-
 ## Addition of .env files
 
-The `app-dev.env` and `app-prod.env` files haven't been removed for reference.
-
-
-MODE=prod SHIPLOGS=true GRAPHITE_URL=graphite:8125 LOGSTASH_URL=logstash:8089 docker-compose up -d 
+The `app-dev.env` and `app-prod.env` files haven't been ignored in git for reference.
