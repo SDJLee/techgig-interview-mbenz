@@ -1,7 +1,7 @@
 package main
 
-import serve "github.com/SDJLee/mercedes-benz/cmd"
+import "github.com/SDJLee/mercedes-benz/cmd"
 
 func main() {
-	serve.Serve("8080")
+	cmd.Execute()
 }

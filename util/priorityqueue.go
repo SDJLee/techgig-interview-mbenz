@@ -2,7 +2,6 @@ package util
 
 import (
 	"container/heap"
-	"fmt"
 )
 
 type QueueItem struct {
@@ -53,7 +52,6 @@ func (pq *PriorityQueue) PopItem() *QueueItem {
 }
 
 func (pq PriorityQueue) IsEmpty() bool {
-	fmt.Println("length of pq: ", len(pq))
 	return pq.Len() <= 0
 }
 

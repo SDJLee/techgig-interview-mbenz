@@ -1,16 +1,19 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"sync/atomic"
 
+	log "github.com/SDJLee/mercedes-benz/logger"
+	"github.com/SDJLee/mercedes-benz/metrics"
 	"github.com/SDJLee/mercedes-benz/model"
+	"github.com/SDJLee/mercedes-benz/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
 
 var requests int64
+var logger = log.SubLogger("merc-benz-route-checker")
 
 func HandleHealthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -21,13 +24,13 @@ func HandleHealthCheck(c *gin.Context) {
 func HandleFuelCheck(c *gin.Context) {
 	var reqBody model.Request
 	if err := c.ShouldBindBodyWith(&reqBody, binding.JSON); err != nil {
-		fmt.Println("invalid request", err)
+		logger.Error("invalid request", err)
 		c.String(http.StatusBadRequest, `invalid request`)
+		return
 	}
 	incrementRequestCount()
-	response := computeArrival(&reqBody, getRequests())
+	response := computeTravel(&reqBody, getRequests())
 	c.JSON(http.StatusOK, response)
-
 }
 
 func incrementRequestCount() {
@@ -38,4 +41,20 @@ func getRequests() int64 {
 	return atomic.LoadInt64(&requests)
 }
 
-// TODO: stations in response should have
+func SetupRouter() http.Handler {
+	env := util.GetEnv()
+	if env == util.EnvProd {
+		logger.Info("setting up router in prod mode")
+		gin.SetMode(gin.ReleaseMode)
+	}
+	router := gin.New()
+
+	router.Use(metrics.MeasureApiComputationTime())
+
+	apiRoute := router.Group(util.ApiBasePath)
+	apiRoute.GET(util.ApiHealthCheck, HandleHealthCheck)
+
+	apiRouteV1 := apiRoute.Group(util.ApiV1)
+	apiRouteV1.POST(util.ApiComputeRoute, HandleFuelCheck)
+	return router
+}

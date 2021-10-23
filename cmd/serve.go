@@ -1,4 +1,4 @@
-package serve
+package cmd
 
 import (
 	"fmt"
@@ -6,34 +6,35 @@ import (
 	"time"
 
 	"github.com/SDJLee/mercedes-benz/handler"
-	"github.com/SDJLee/mercedes-benz/metrics"
-	"github.com/gin-gonic/gin"
+	log "github.com/SDJLee/mercedes-benz/logger"
+	"github.com/SDJLee/mercedes-benz/util"
+	"github.com/spf13/viper"
 )
 
-func Serve(port string) {
-	router := setupRouter()
+var logger = log.Logger()
+
+func serve() {
+	port := viper.GetInt(util.Port)
+	writeTimeout := viper.GetInt(util.ServerWriteTimeout)
+	readTimeout := viper.GetInt(util.ServerReadTimeout)
+
+	if writeTimeout == 0 {
+		writeTimeout = 15
+	}
+	if readTimeout == 0 {
+		readTimeout = 15
+	}
+	logger.Infof("attempting to serve in port '%d' \n", port)
+	router := handler.SetupRouter()
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         "localhost:" + port,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		Addr:         fmt.Sprintf(":%d", port),
+		WriteTimeout: time.Duration(writeTimeout) * time.Second,
+		ReadTimeout:  time.Duration(readTimeout) * time.Second,
 	}
-	fmt.Println("Server started and listening on the port: ", port)
+	logger.Info("Server started and listening on the port: ", port)
 	if err := srv.ListenAndServe(); err != nil {
-		fmt.Println("failed to start devero-services-evv", err)
+		logger.Error("failed to start merc-benz-route-checker", err)
 		panic(err)
 	}
-}
-
-func setupRouter() http.Handler {
-	router := gin.New()
-
-	router.Use(metrics.MeasureApiComputationTime())
-
-	apiRoute := router.Group("/api")
-	apiRoute.GET("health", handler.HandleHealthCheck)
-
-	apiRouteV1 := apiRoute.Group("/v1")
-	apiRouteV1.POST("/check-fuel", handler.HandleFuelCheck)
-	return router
 }

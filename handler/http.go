@@ -3,11 +3,15 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/SDJLee/mercedes-benz/metrics"
 	"github.com/SDJLee/mercedes-benz/model"
+	"github.com/SDJLee/mercedes-benz/util"
+	"github.com/spf13/viper"
 )
 
 var defaultHeaders = map[string]string{
@@ -15,9 +19,13 @@ var defaultHeaders = map[string]string{
 	"Response-Type": "application/json",
 }
 
+// retrieves current charge level
 func GetChargeLevel(requestBody *model.ReqChargeLevel) (*model.ResChargeLevel, error) {
-	url := "https://restmock.techgig.com/merc/charge_level"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charge_level"
+	defer metrics.StatTime("api.chargelevel")()
+	logger.Info("retrieving charge level data")
+	defer logger.Info("retrieved charge level data")
+	url := fmt.Sprintf("%s/charge_level", viper.GetString(util.ApiAddress))
+	logger.Debugf("API url to retrieve charge level: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
 	if err != nil {
@@ -34,14 +42,16 @@ func GetChargeLevel(requestBody *model.ReqChargeLevel) (*model.ResChargeLevel, e
 	if err != nil {
 		return nil, err
 	}
-	// TODO: remove this
-	// fmt.Println("response ChargeLevel", response)
 	return response, nil
 }
 
+// retrieves travel distance
 func GetTravelDistance(requestBody *model.ReqTravelDistance) (*model.ResTravelDistance, error) {
-	url := "https://restmock.techgig.com/merc/distance"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/distance"
+	defer metrics.StatTime("api.traveldistance")()
+	logger.Info("retrieving travel distance data")
+	defer logger.Info("retrieved travel distance data")
+	url := fmt.Sprintf("%s/distance", viper.GetString(util.ApiAddress))
+	logger.Debugf("API url to retrieve travel distance: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
 	if err != nil {
@@ -58,14 +68,16 @@ func GetTravelDistance(requestBody *model.ReqTravelDistance) (*model.ResTravelDi
 	if err != nil {
 		return nil, err
 	}
-	// TODO: remove this
-	fmt.Println("response TravelDistance", response)
 	return response, nil
 }
 
+// retrieves charging stations
 func GetChargingStations(requestBody *model.ReqChargeStations) (*model.ResChargeStations, error) {
-	url := "https://restmock.techgig.com/merc/charging_stations"
-	// url := "https://1dfc2490-c871-48d6-8303-24994e9e4ca5.mock.pstmn.io/charging_stations"
+	defer metrics.StatTime("api.chargestation")()
+	logger.Info("retrieving charge stations data")
+	defer logger.Info("retrieved charge stations data")
+	url := fmt.Sprintf("%s/charging_stations", viper.GetString(util.ApiAddress))
+	logger.Debugf("API url to retrieve charge stations: %s", url)
 
 	jsonPayload, err := json.Marshal(requestBody)
 	if err != nil {
@@ -82,11 +94,10 @@ func GetChargingStations(requestBody *model.ReqChargeStations) (*model.ResCharge
 	if err != nil {
 		return nil, err
 	}
-	// TODO: remove this
-	// fmt.Println("response ChargeStations", response)
 	return response, nil
 }
 
+// common method to perform http post request
 func makePostRequest(url string, bytePayload []byte) ([]byte, error) {
 	bufferPayload := bytes.NewBuffer(bytePayload)
 	client := &http.Client{}
@@ -113,8 +124,5 @@ func makePostRequest(url string, bytePayload []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: remove this
-	// fmt.Println("PostRequest", string(responseByte))
 	return responseByte, nil
 }
