@@ -14,6 +14,12 @@ The application is to identify the minimum number of stations required to stop f
 * ELK stack for log analysis
 * Graphite, Statsd and Grafana for metric collection and visualization
 
+## Architecture
+
+The below is the architecture diagram
+
+![Architecture](./screenshots/architecture/architecture.png)
+
 ## Log analysis and Instrumentation
 
 * By using ELK stack, the microservice can push logs into logstash in the port `8089` which can be visualized in kibana.
@@ -95,6 +101,95 @@ For a local build, the below are the APIs available. The same can be found under
 ### Working prototype
 
 To test the working prototype, use the postman collection [merc-benz-route-checker.postman_collection.json](./postman-collection/merc-benz-route-checker.postman_collection.json). Try out the APIs by updating the API URL with the one provided in the PPT.
+
+### Using postman variable to toggle URL
+
+* Import the postman collection
+* Right-click the collection -> Edit
+* Go to `Variables` tab
+* Toggle the `url` variable between the IP address provided in PPT and `localhost` to switch between the test environment.
+
+![setting up url variable](./screenshots/postman/variable.JPG)
+
+### Screenshots
+
+The below are few screenshots of few test cases.
+
+#### Testcase 1
+
+The car can reach destination by reaching two stations S1 and S2.
+
+![Testcase 1](./screenshots/postman/ex_success.JPG)
+
+#### Testcase 2
+
+The car has enough fuel and doesn't require charging.
+
+![Testcase 2](./screenshots/postman/ex_sufficient_charge.JPG)
+
+#### Testcase 3
+
+The car cannot reach the destination even by visiting stations.
+
+![Testcase 3](./screenshots/postman/ex_unreachable.JPG)
+
+#### Testcase 4
+
+A negative test case where the destination is invalid.
+
+![Testcase 4](./screenshots/postman/ex_invalid_destination.JPG)
+
+#### Testcase 5
+
+A negative test case where the VIN is invalid.
+
+![Testcase 5](./screenshots/postman/ex_invalid_name.JPG)
+
+### Logging
+
+The below is a screenshot of Kibana dashboard
+
+![Kibana](./screenshots/kibana/dashboard.JPG)
+
+### Instrumentation
+
+#### Grafana screenshots for the requests
+
+![Dashboard](./screenshots/grafana/dashboard.JPG)
+
+##### API Response time
+
+API response time shows the time taken for the `/api/v1/compute-route` to compute and respond.
+
+![API Response time](./screenshots/grafana/api_response_time.JPG)
+
+#### Request stats
+
+This panel shows the count of,
+* Cars that successfully reached destination visiting stations
+* Cars that couldn't reach stations even after charging
+* Cars that doesn't require charging and has sufficient charge to reach destination
+* Invalid requests due to invalid VIN, source name or destination name.
+
+![Request stats](./screenshots/grafana/request_stats.JPG)
+
+#### External API response time
+
+This panel shows the time taken for the microservice to retrieve data from other microservices
+
+![External API response time](./screenshots/grafana/external_api_response_time.JPG)
+
+#### Unique user count
+
+This panel displays the number of unique users (VIN) that uses the microservice.
+
+![Unique user count](./screenshots/grafana/unique_number_of_users.JPG)
+
+#### Algorithm computation time
+
+This panel displays the time taken by the algorithm to compute stations list. It is measured in milliseconds. This panel displays 0 when the computation takes less than milliseconds. This depends on the machine the container is hosted in.
+
+![Algorithm computation time](./screenshots/grafana/algorithm_computation_time.JPG)
 
 ## About the logic to find the minimum number of charging station
 
