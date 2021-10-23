@@ -1,0 +1,205 @@
+{
+	"info": {
+		"_postman_id": "4e9a209f-0b8f-4656-8345-c5f49a3b36de",
+		"name": "mercedes-benz-techgig",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "health-check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{url}}:8080/api/health",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "compute-route",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"vin\": \"W1K2062161F0046\", \"source\": \"Home\", \"destination\": \"Movie Theatre\" }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}:8080/api/v1/compute-route",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"compute-route"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "compute-route invalidname",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"vin\": \"W1K2062161F0123\", \"source\": \"Home\", \"destination\": \"Movie Theatre\" }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}:8080/api/v1/compute-route",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"compute-route"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "compute-route invaliddest",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"vin\": \"W1K2062161F0046\", \"source\": \"Home\", \"destination\": \"Office\" }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}:8080/api/v1/compute-route",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"compute-route"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "compute-route unreachable",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"vin\": \"W1K2062161F0080\", \"source\": \"Home\", \"destination\": \"Airport\" }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}:8080/api/v1/compute-route",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"compute-route"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "compute-route sufficientfuel",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"vin\": \"W1K2062161F0033\", \"source\": \"Home\", \"destination\": \"Lake\" }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}:8080/api/v1/compute-route",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"compute-route"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "localhost"
+		}
+	]
+}
